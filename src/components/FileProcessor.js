@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
 import { PDFDocument } from 'pdf-lib';
 import { saveAs } from 'file-saver';
+import JSZip from 'jszip';
 
 function FileProcessor() {
   const [excelData, setExcelData] = useState([]);
@@ -58,14 +59,16 @@ function FileProcessor() {
     setPdfPreviews(previews);
   };
 
-  // Function to download a single PDF file
-  const downloadPdf = (fileName, pdfData) => {
-    saveAs(new Blob([pdfData]), fileName);
-  };
+  // Function to create a zip file and download all PDFs
+  const downloadAllPdfsAsZip = async () => {
+    const zip = new JSZip();
 
-  // Function to download all PDF files
-  const downloadAllPdfs = () => {
-    pdfPreviews.forEach(({ fileName, pdfData }) => downloadPdf(fileName, pdfData));
+    pdfPreviews.forEach(({ fileName, pdfData }) => {
+      zip.file(fileName, pdfData);
+    });
+
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    saveAs(zipBlob, 'pdf_files.zip');
   };
 
   return (
@@ -82,10 +85,9 @@ function FileProcessor() {
               <div key={index} className="pdf-preview">
                 <h3>{fileName}</h3>
                 <iframe src={previewUrl} width="100%" height="500px" title={fileName}></iframe>
-                <button onClick={() => downloadPdf(fileName, pdfPreviews[index].pdfData)}>Download</button>
               </div>
             ))}
-            <button onClick={downloadAllPdfs}>Download All PDFs</button>
+            <button onClick={downloadAllPdfsAsZip}>Download All PDFs as Zip</button>
           </>
         )}
       </div>
